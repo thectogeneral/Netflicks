@@ -1,14 +1,88 @@
-import { Button, Input } from "@nextui-org/react";
-import Loading from "../../components/Loading";
-//import { Link } from "react-router-dom";
+import { Button, Input, InputGroup, InputRightElement } from "@chakra-ui/react";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { createToast } from "vercel-toast";
+import { useRouter } from "next/router";
+import { auth } from "../../../config/firebase";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { ClipLoader } from "react-spinners";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [backdrop, setBackdrop] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const isEmail = /\S+@\S+\.\S+/.test(email);
+
+    try {
+      if (!email || !password) {
+        return createToast("Please fill in all the fields", {
+          cancel: "Cancel",
+          timeout: 3000,
+          type: "error",
+        });
+      } else if (!isEmail) {
+        return createToast("Please enter a valid email", {
+          cancel: "Cancel",
+          timeout: 3000,
+          type: "error",
+        });
+      } else {
+        setLoggedIn(true);
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (error) {
+      if (error.message.includes("not-found")) {
+        setLoggedIn(false);
+        return createToast("The user is not found", {
+          action: {
+            text: "Sign Up",
+            callback(toast) {
+              router.push("/signup");
+              toast.destroy();
+            },
+          },
+          timeout: 3000,
+          cancel: "Cancel",
+          type: "dark",
+        });
+      } else if (error.message.includes("wrong-password")) {
+        setLoggedIn(false);
+        return createToast("The password is incorrect", {
+          cancel: "Cancel",
+          timeout: 3000,
+          type: "error",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.push("/");
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
 
   useEffect(() => {
     axios
@@ -20,19 +94,22 @@ export default function Login() {
           "https://image.tmdb.org/t/p/original" +
             res.data.backdrops[3].file_path
         );
-      });
+      })
+      .catch((err) => console.error(err));
 
     const params = new URLSearchParams(location.search);
-    const email = params.get("email");
-    if (email) {
-      setEmail(email);
+    const emailParam = params.get("email");
+    if (emailParam) {
+      setEmail(emailParam);
     }
   }, []);
 
   return (
     <>
       {loading ? (
-        <Loading />
+        <div className="flex items-center justify-center min-h-screen">
+          <ClipLoader color="#ffffff" size={150} />
+        </div>
       ) : (
         <div
           style={{
@@ -57,46 +134,70 @@ export default function Login() {
 
           <div className="relative z-10 w-full max-w-md flex flex-col items-center rounded-md p-8">
             <h1 className="text-white text-3xl font-bold mb-6">Login</h1>
-            <form className="w-full">
+            <form className="w-full" onSubmit={handleSubmit}>
               <Input
                 isRequired
                 type="email"
                 placeholder="example@gmail.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-md text-white mb-4"
+                className="w-full px-4 py-2 rounded-md text-dark mb-4"
                 label="Email"
                 labelClassName="text-white"
               />
-              <Input
-                isRequired
-                //type={isVisible ? "text" : "password"}
-                placeholder="enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-md text-white mb-4"
-                label="Password"
-                labelClassName="text-white"
-                endContent={
+              <InputGroup className="mb-4">
+                <Input
+                  isRequired
+                  type={isVisible ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2 rounded-md text-dark"
+                  label="Password"
+                  labelClassName="text-white"
+                />
+                <InputRightElement width="4.5rem">
                   <button
                     className="focus:outline-none"
                     type="button"
-                    //onClick={toggleVisibility}
-                  ></button>
-                }
-              />
-              <Button
-                //onClick={handleSubmit}
-                className="w-full mt-4 text-white"
-                color="primary"
-              >
-                Login
-              </Button>
+                    onClick={toggleVisibility}
+                  >
+                    {isVisible ? (
+                      <FaRegEye className="text-2xl text-default-400 pointer-events-none" />
+                    ) : (
+                      <FaRegEyeSlash className="text-2xl text-default-400 pointer-events-none" />
+                    )}
+                  </button>
+                </InputRightElement>
+              </InputGroup>
+
+              {loggedIn ? (
+                <Button
+                  disabled
+                  color="primary"
+                  className="ml-auto w-full flex justify-center items-center gap-2"
+                >
+                  <ClipLoader color="#ffffff" size={24} />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="w-full mt-4 text-white bg-blue-500"
+                  color="primary"
+                >
+                  Login
+                </Button>
+              )}
             </form>
             <p className="text-white mt-4 text-center">
-              Don{"'"}t Have An Account? <span className="text-white"> | </span>
+              Don't Have An Account?{" "}
+              <Link className="text-blue-500 underline" href="/signup">
+                Sign Up
+              </Link>
+              <span className="text-white"> | </span>
               <Button
-                //onClick={resetPassword}
+                // Uncomment and implement resetPassword when needed
+                // onClick={resetPassword}
                 className="bg-transparent text-blue-500 underline"
               >
                 Forgot Password
