@@ -132,44 +132,46 @@ export default function Login() {
             }}
           ></div>
 
-          <div className="relative z-10 w-full max-w-md flex flex-col items-center rounded-md p-8">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="relative z-10 w-full max-w-md flex flex-col items-center bg-gray-800 bg-opacity-80 p-8 rounded-lg shadow-lg">
             <h1 className="text-white text-3xl font-bold mb-6">Login</h1>
             <form className="w-full" onSubmit={handleSubmit}>
-              <Input
-                isRequired
-                type="email"
-                placeholder="example@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-md text-dark mb-4"
-                label="Email"
-                labelClassName="text-white"
-              />
-              <InputGroup className="mb-4">
+              <div className="mb-4">
                 <Input
                   isRequired
-                  type={isVisible ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md text-dark"
-                  label="Password"
-                  labelClassName="text-white"
+                  type="email"
+                  placeholder="example@gmail.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <InputRightElement width="4.5rem">
-                  <button
-                    className="focus:outline-none"
-                    type="button"
-                    onClick={toggleVisibility}
-                  >
-                    {isVisible ? (
-                      <FaRegEye className="text-2xl text-default-400 pointer-events-none" />
-                    ) : (
-                      <FaRegEyeSlash className="text-2xl text-default-400 pointer-events-none" />
-                    )}
-                  </button>
-                </InputRightElement>
-              </InputGroup>
+              </div>
+              <div className="mb-4">
+                <InputGroup className="mb-4">
+                  <Input
+                    type={isVisible ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+
+                  <InputRightElement width="4.5rem">
+                    <button
+                      className="focus:outline-none"
+                      type="button"
+                      onClick={toggleVisibility}
+                    >
+                      {isVisible ? (
+                        <FaRegEye className="text-2xl text-default-400 pointer-events-none" />
+                      ) : (
+                        <FaRegEyeSlash className="text-2xl text-default-400 pointer-events-none" />
+                      )}
+                    </button>
+                  </InputRightElement>
+                </InputGroup>
+              </div>
 
               {loggedIn ? (
                 <Button
@@ -182,7 +184,7 @@ export default function Login() {
               ) : (
                 <Button
                   type="submit"
-                  className="w-full mt-4 text-white bg-blue-500"
+                  className="w-full py-2 bg-blue-500 text-white font-semibold rounded-md hover:bg-blue-600"
                   color="primary"
                 >
                   Login
